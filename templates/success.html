@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration Successful</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body onload="launchConfetti()">
+  <div class="success-container">
+      <h2>🎉 Registration Successful!</h2>
+      <p>Thank you, {{ name }}. We have received your details.</p>
+      <a href="{{ url_for('home') }}" class="btn-home">Back to Home</a>
+  </div>
+
+  <script>
+      function launchConfetti() {
+          var duration = 8 * 1000;
+          var animationEnd = Date.now() + duration;
+          var defaults = {
+              startVelocity: 40,
+              spread: 720,
+              ticks: 120,
+              gravity: 0.7,
+              scalar: 1.4,
+              zIndex: 0,
+              colors: ["#4285F4", "#EA4335", "#FBBC05", "#34A853"]
+          };
+
+          function randomInRange(min, max) {
+              return Math.random() * (max - min) + min;
+          }
+
+          var interval = setInterval(function() {
+              var timeLeft = animationEnd - Date.now();
+              if (timeLeft <= 0) return clearInterval(interval);
+
+              var particleCount = 100;
+
+              confetti(Object.assign({}, defaults, {
+                  particleCount,
+                  angle: randomInRange(55, 125),
+                  origin: { x: randomInRange(0.2, 0.8), y: 0.3 }
+              }));
+          }, 300);
+      }
+  </script>
+</body>
+</html>
