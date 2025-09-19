@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin - Registrations</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    table { width:100%; border-collapse: collapse; }
+    th, td { padding:8px 10px; border:1px solid #eee; text-align:left; font-size:14px; }
+    th { background:#f7f7f7; }
+    .actions { margin-top:12px; display:flex; gap:10px; justify-content:center; }
+    .small-btn { padding:8px 12px; border-radius:8px; text-decoration:none; color:white; background:#4285F4; }
+    .small-btn.secondary { background:#34A853; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Registrations (Admin)</h2>
+
+    {% if registrations %}
+      <div style="overflow:auto; max-height:60vh; margin-bottom:12px;">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Year</th>
+              <th>Branch</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in registrations %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>{{ r.get('name','') }}</td>
+              <td>{{ r.get('email','') }}</td>
+              <td>{{ r.get('phone','') }}</td>
+              <td>{{ r.get('year','') }}</td>
+              <td>{{ r.get('branch','') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <a class="small-btn" href="{{ url_for('admin_download') }}?key={{ key }}">Download CSV</a>
+        <a class="small-btn secondary" href="{{ url_for('admin_download_excel') }}?key={{ key }}">Download Excel (.xlsx)</a>
+      </div>
+
+    {% else %}
+      <p>No registrations yet.</p>
+    {% endif %}
+
+    <p style="text-align:center; margin-top:18px;"><a href="{{ url_for('home') }}" class="btn-register">Back to Home</a></p>
+  </div>
+</body>
+</html>
