@@ -46,10 +46,11 @@
         </table>
       </div>
 
-      <div class="actions">
-        <a class="small-btn" href="{{ url_for('admin_download') }}?key={{ key }}">Download CSV</a>
-        <a class="small-btn secondary" href="{{ url_for('admin_download_excel') }}?key={{ key }}">Download Excel (.xlsx)</a>
-      </div>
+ <div class="actions">
+  <a class="small-btn" href="{{ url_for('admin_download') }}">Download CSV</a>
+  <a class="small-btn secondary" href="{{ url_for('admin_download_excel') }}">Download Excel (.xlsx)</a>
+  <a class="small-btn" href="{{ url_for('logout') }}" style="background-color:#EA4335;">Logout</a>
+</div>
 
     {% else %}
       <p>No registrations yet.</p>

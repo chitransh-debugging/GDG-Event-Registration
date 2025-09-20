@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, abort
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, abort, session
 import csv
 import os
 import io
@@ -6,12 +6,16 @@ from openpyxl import Workbook
 
 app = Flask(__name__)
 
+# IMPORTANT: Add a secret key for session management
+# In a real app, this should be a long, random string.
+app.secret_key = os.environ.get("SECRET_KEY", "my-super-secret-dev-key")
+
 # ensure data folder exists
 if not os.path.exists("data"):
     os.makedirs("data")
 
 CSV_FILE = "data/registrations.csv"
-ADMIN_KEY = os.environ.get("ADMIN_KEY", "admin123")  # change on Render to a secret
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "secret123") # Changed from ADMIN_KEY
 
 @app.route("/")
 def home():
@@ -26,16 +30,13 @@ def register():
         year = request.form.get("year", "").strip()
         branch = request.form.get("branch", "").strip()
 
-        # write header if file missing/empty
         write_header = (not os.path.exists(CSV_FILE)) or (os.path.getsize(CSV_FILE) == 0)
         with open(CSV_FILE, "a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             if write_header:
                 writer.writerow(["name", "email", "phone", "year", "branch"])
             writer.writerow([name, email, phone, year, branch])
-
         return redirect(url_for("success", name=name))
-
     return render_template("form.html")
 
 @app.route("/success")
@@ -53,40 +54,55 @@ def api_registrations():
                 regs.append(row)
     return jsonify(regs)
 
-# Admin page (list + download buttons)
+# --- NEW ADMIN LOGIN WORKFLOW ---
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        password = request.form.get("password")
+        if password == ADMIN_PASSWORD:
+            session['admin'] = True # Set a session variable
+            return redirect(url_for("admin"))
+        else:
+            error = "Invalid password. Please try again."
+    return render_template("login.html", error=error)
+
+@app.route("/logout")
+def logout():
+    session.pop('admin', None) # Clear the session variable
+    return redirect(url_for('home'))
+
+# UPDATED Admin page (now checks for session)
 @app.route("/admin")
 def admin():
-    key = request.args.get("key") or request.headers.get("X-Admin-Key")
-    if not key or key != ADMIN_KEY:
-        abort(401, description="Unauthorized")
+    if 'admin' not in session: # Check if the user is logged in
+        return redirect(url_for('login'))
+
     regs = []
     if os.path.exists(CSV_FILE):
         with open(CSV_FILE, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 regs.append(row)
-    return render_template("admin.html", registrations=regs, key=key)
+    return render_template("admin.html", registrations=regs)
 
-# Download CSV (protected)
+# UPDATED Download routes (now check for session)
 @app.route("/admin/download")
 def admin_download():
-    key = request.args.get("key") or request.headers.get("X-Admin-Key")
-    if not key or key != ADMIN_KEY:
-        abort(401, description="Unauthorized")
+    if 'admin' not in session:
+        abort(401)
     if not os.path.exists(CSV_FILE):
         abort(404, description="No registrations yet")
     return send_file(CSV_FILE, as_attachment=True, download_name="registrations.csv", mimetype="text/csv")
 
-# Download Excel (.xlsx) generated on-the-fly (protected)
 @app.route("/admin/download_excel")
 def admin_download_excel():
-    key = request.args.get("key") or request.headers.get("X-Admin-Key")
-    if not key or key != ADMIN_KEY:
-        abort(401, description="Unauthorized")
+    if 'admin' not in session:
+        abort(401)
     if not os.path.exists(CSV_FILE):
         abort(404, description="No registrations yet")
 
-    # read CSV and write to Excel in memory
     wb = Workbook()
     ws = wb.active
     with open(CSV_FILE, "r", encoding="utf-8") as f:
@@ -101,6 +117,5 @@ def admin_download_excel():
                      mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
