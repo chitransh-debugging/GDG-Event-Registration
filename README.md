@@ -15,6 +15,7 @@ This application allows students to register for events through a public-facing 
 ## Live Demo 🚀
 
 [**Click here to view the live application**](https://gdg-event-registration-f.onrender.com/)
+website might be on sleep so please wait for 30 seconds.
 
 -----
 
